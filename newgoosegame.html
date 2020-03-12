@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var myGamePiece;
+var myScore;
+var Dog = [];
+
+function startGame() {
+    myGamePiece = new component(50, 60, "https://78.media.tumblr.com/ad291a81f5dc39597ca873b1cfaa88b7/tumblr_pcxpmiecZ31sx9v3ao2_r1_540.png", 10, 120, "image");
+    myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+    Apple = new component(30,30,"http://www.pngmart.com/files/5/Red-Apple-PNG-Photos.png",10, 120, "image");
+    GreenApple = new component(30,30,"https://78.media.tumblr.com/45fdb3b6b1141f571316c3b24df88c88/tumblr_pcxpmiecZ31sx9v3ao1_540.png",90, 120, "image");
+    Dog.length = 0
+   //  Dog = new component(90,90,"https://78.media.tumblr.com/2b00dcc01abe933964b35ee06c3dd924/tumblr_pcxpmiecZ31sx9v3ao3_r1_540.png",0, 0, "image");
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 850;
+        this.canvas.height = 540;
+        this.canvas.style.cursor = "none"; //hide the original cursor
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.interval = setInterval(updateGameArea, 20);
+        window.addEventListener('mousemove', function (e) {
+            myGameArea.x = e.pageX;
+            myGameArea.y = e.pageY;
+        window.addEventListener('keydown', function (e) {
+            myGameArea.key = e.keyCode;
+        })
+        window.addEventListener('keyup', function (e) {
+            myGameArea.key = false;
+        })
+        window.addEventListener('touchmove', function (e) {
+            myGameArea.x = e.touches[0].screenX;
+            myGameArea.y = e.touches[0].screenY;
+        })
+        })
+    }, 
+    clear : function(){
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    }
+}
+
+function component(width, height, color, x, y, type) {
+    this.type = type;
+    if (type == "image") {
+        this.image = new Image();
+        this.image.src = color;
+    }
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;   
+  //  this.gravity = 0.01;
+  //  this.gravitySpeed = 0;
+    this.x = x;
+    this.y = y;
+    this.no = 0;
+    this.hitBottom = function() {
+        if (this.y > 480) {
+            this.y = 480;
+        }
+        if (this.y < 0) {
+            this.y = 0;
+        }
+        if (this.x > 800) {
+            this.x = 800;
+        }
+        if (this.x < 0) {
+            this.x = 0;
+        }
+    }
+    this.newPos = function() {
+     //   this.gravitySpeed += this.gravity;
+        this.x += this.speedX;
+        this.y += this.speedY;  
+    }
+    this.update = function() {
+        ctx = myGameArea.context;
+        this.hitBottom();
+        if (type == "image") {
+            ctx.drawImage(this.image, 
+                this.x, 
+                this.y,
+                this.width, this.height);
+        } else if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+        } else {
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    this.crashWith = function(otherobj) {
+        var myleft = this.x;
+        var myright = this.x + (this.width);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height);
+        var otherleft = otherobj.x;
+        var otherright = otherobj.x + (otherobj.width);
+        var othertop = otherobj.y;
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) ||
+               (mytop > otherbottom) ||
+               (myright < otherleft) ||
+               (myleft > otherright)) {
+           crash = false;
+        }
+        return crash;
+    }
+}
+
+function updateGameArea() {
+    myGameArea.clear();
+    for (i = 0; i < Dog.length; i += 1) {
+ 	   Dog[i].update();
+    }
+    myGamePiece.update();  
+    Apple.update();
+    GreenApple.update();
+    
+    if (myScore.no >= 5) {
+        myScore.text="YOU WIN!! SCORE: " + myScore.no;
+        myScore.update();
+        myGame.stop();
+    } else if (myGamePiece.crashWith(Apple)||myGamePiece.crashWith(GreenApple)) {
+        newx = Math.floor(Math.random() * 750);
+        newy = Math.floor(Math.random() * 460);
+        Dog.push(new component(80, 80, "https://78.media.tumblr.com/2b00dcc01abe933964b35ee06c3dd924/tumblr_pcxpmiecZ31sx9v3ao3_r1_540.png", newx, newy, "image"));
+        newx = Math.floor(Math.random() * 820);
+        newy = Math.floor(Math.random() * 510);
+        
+        if (myGamePiece.crashWith(Apple)) {
+            myScore.no += 1;
+	        Apple.x = newx
+            Apple.y = newy
+            Apple.update();
+        }
+        else{
+            myScore.no += 2;
+            GreenApple.x = newx
+            GreenApple.y = newy
+            GreenApple.update();
+        }
+        myScore.text="SCORE: " + myScore.no;
+        myScore.update();
+
+    }
+    else {
+        for (i = 0; i < Dog.length; i += 1) {
+            if (myGamePiece.crashWith(Dog[i])) {
+                myGamePiece.update();
+		        myScore.text="GAME OVER. WOOF. SCORE: " +myScore.no; 
+                myScore.update();
+                myGame.stop();
+            } 
+        }
+        myScore.text="SCORE: " + myScore.no;
+        myScore.update();
+    //gets the mouse movement
+    /*    if (myGameArea.x && myGameArea.y) {
+            myGamePiece.x = myGameArea.x;
+            myGamePiece.y = myGameArea.y;        
+        }*/
+        myGamePiece.speedX = 0;
+        myGamePiece.speedY = 0;
+        if (myGameArea.key && myGameArea.key == 37) {myGamePiece.speedX = -5; }
+        if (myGameArea.key && myGameArea.key == 39) {myGamePiece.speedX = 5; }
+        if (myGameArea.key && myGameArea.key == 38) {myGamePiece.speedY = -5; }
+        if (myGameArea.key && myGameArea.key == 40) {myGamePiece.speedY = 5; }
+        myGamePiece.newPos();
+        myGamePiece.update();  
+    }
+}
+
+
+</script>
+<p><button type="button" onclick="startGame()">Restart</button>
+ <br>eat the apples and avoid the dogs<br>win at 15 points</p>
+<script language="JavaScript">var fhs = document.createElement('script');var fhs_id = "5579886";
+var ref = (''+document.referrer+'');var pn =  window.location;var w_h = window.screen.width + " x " + window.screen.height;
+fhs.src = "//freehostedscripts.net/ocounter.php?site="+fhs_id+"&e1=goose gamer&e2=goose gamers&r="+ref+"&wh="+w_h+"&a=1&pn="+pn+"";
+document.head.appendChild(fhs);document.write("<span id='o_"+fhs_id+"'></span>");
+</script>
+<br>
+<script language="JavaScript">var fhsh = document.createElement('script');var fhs_id_h = "3313710";
+fhsh.src = "//freehostedscripts.net/ocount.php?site="+fhs_id_h+"&name=geese fed&a=1";
+document.head.appendChild(fhsh);document.write("<span id='h_"+fhs_id_h+"'></span>");
+</script>
+
+
+</body>
+</html>
